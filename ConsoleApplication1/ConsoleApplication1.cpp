@@ -1,8 +1,9 @@
 // ConsoleApplication1.cpp : This file contains the 'main' function. Program execution begins and ends there.
 //
-
+#define _CRT_SECURE_NO_WARNINGS
 #include <iostream>
 #include <ole2.h> // OLE2 Definitions
+#include <string>
 
 // AutoWrap() - Automation helper function...
 HRESULT AutoWrap(int autoType, VARIANT* pvResult, IDispatch* pDisp, LPOLESTR ptName, int cArgs...) {
@@ -11,7 +12,7 @@ HRESULT AutoWrap(int autoType, VARIANT* pvResult, IDispatch* pDisp, LPOLESTR ptN
     va_start(marker, cArgs);
 
     if (!pDisp) {
-        MessageBox(NULL, "NULL IDispatch passed to AutoWrap()", "Error", 0x10010);
+        MessageBox(NULL, L"NULL IDispatch passed to AutoWrap()", L"Error", 0x10010);
         _exit(0);
     }
 
@@ -31,7 +32,7 @@ HRESULT AutoWrap(int autoType, VARIANT* pvResult, IDispatch* pDisp, LPOLESTR ptN
     hr = pDisp->GetIDsOfNames(IID_NULL, &ptName, 1, LOCALE_USER_DEFAULT, &dispID);
     if (FAILED(hr)) {
         sprintf(buf, "IDispatch::GetIDsOfNames(\"%s\") failed w/err 0x%08lx", szName, hr);
-        MessageBox(NULL, buf, "AutoWrap()", 0x10010);
+        MessageBox(NULL, (wchar_t*)buf, L"AutoWrap()", 0x10010);
         _exit(0);
         return hr;
     }
@@ -57,7 +58,7 @@ HRESULT AutoWrap(int autoType, VARIANT* pvResult, IDispatch* pDisp, LPOLESTR ptN
     hr = pDisp->Invoke(dispID, IID_NULL, LOCALE_SYSTEM_DEFAULT, autoType, &dp, pvResult, NULL, NULL);
     if (FAILED(hr)) {
         sprintf(buf, "IDispatch::Invoke(\"%s\"=%08lx) failed w/err 0x%08lx", szName, dispID, hr);
-        MessageBox(NULL, buf, "AutoWrap()", 0x10010);
+        MessageBox(NULL, (wchar_t*)buf, L"AutoWrap()", 0x10010);
         _exit(0);
         return hr;
     }
@@ -79,7 +80,7 @@ int main()
 
     if (FAILED(hr)) {
 
-        ::MessageBox(NULL, "CLSIDFromProgID() failed", "Error", 0x10010);
+        ::MessageBox(NULL, L"CLSIDFromProgID() failed", L"Error", 0x10010);
         return -1;
     }
 
@@ -87,7 +88,7 @@ int main()
     IDispatch* pXlApp;
     hr = CoCreateInstance(clsid, NULL, CLSCTX_LOCAL_SERVER, IID_IDispatch, (void**)&pXlApp);
     if (FAILED(hr)) {
-        ::MessageBox(NULL, "Excel not registered properly", "Error", 0x10010);
+        ::MessageBox(NULL, L"Excel not registered properly", L"Error", 0x10010);
         return -2;
     }
 
@@ -97,7 +98,7 @@ int main()
         VARIANT x;
         x.vt = VT_I4;
         x.lVal = 1;
-        AutoWrap(DISPATCH_PROPERTYPUT, NULL, pXlApp, L"Visible", 1, x);
+        AutoWrap(DISPATCH_PROPERTYPUT, NULL, pXlApp, (wchar_t*)L"Visible", 1, x);
     }
 
     // Get Workbooks collection
@@ -105,7 +106,7 @@ int main()
     {
         VARIANT result;
         VariantInit(&result);
-        AutoWrap(DISPATCH_PROPERTYGET, &result, pXlApp, L"Workbooks", 0);
+        AutoWrap(DISPATCH_PROPERTYGET, &result, pXlApp, (wchar_t*)L"Workbooks", 0);
         pXlBooks = result.pdispVal;
     }
 
@@ -114,7 +115,7 @@ int main()
     {
         VARIANT result;
         VariantInit(&result);
-        AutoWrap(DISPATCH_PROPERTYGET, &result, pXlBooks, L"Add", 0);
+        AutoWrap(DISPATCH_PROPERTYGET, &result, pXlBooks, (wchar_t*)L"Add", 0);
         pXlBook = result.pdispVal;
     }
 
@@ -146,7 +147,7 @@ int main()
     {
         VARIANT result;
         VariantInit(&result);
-        AutoWrap(DISPATCH_PROPERTYGET, &result, pXlApp, L"ActiveSheet", 0);
+        AutoWrap(DISPATCH_PROPERTYGET, &result, pXlApp, (wchar_t*)L"ActiveSheet", 0);
         pXlSheet = result.pdispVal;
     }
 
@@ -159,17 +160,17 @@ int main()
 
         VARIANT result;
         VariantInit(&result);
-        AutoWrap(DISPATCH_PROPERTYGET, &result, pXlSheet, L"Range", 1, parm);
+        AutoWrap(DISPATCH_PROPERTYGET, &result, pXlSheet, (wchar_t*)L"Range", 1, parm);
         VariantClear(&parm);
 
         pXlRange = result.pdispVal;
     }
 
     // Set range with our safearray...
-    AutoWrap(DISPATCH_PROPERTYPUT, NULL, pXlRange, L"Value", 1, arr);
+    AutoWrap(DISPATCH_PROPERTYPUT, NULL, pXlRange, (wchar_t*)L"Value", 1, arr);
 
     // Wait for user...
-    ::MessageBox(NULL, "All done.", "Notice", 0x10000);
+    ::MessageBox(NULL, L"All done.", L"Notice", 0x10000);
 
     // Set .Saved property of workbook to TRUE so we aren't prompted
     // to save when we tell Excel to quit...
@@ -177,11 +178,12 @@ int main()
         VARIANT x;
         x.vt = VT_I4;
         x.lVal = 1;
-        AutoWrap(DISPATCH_PROPERTYPUT, NULL, pXlBook, L"Saved", 1, x);
+        AutoWrap(DISPATCH_PROPERTYPUT, NULL, pXlBook, (wchar_t*)L"Saved", 1, x);
     }
 
     // Tell Excel to quit (i.e. App.Quit)
-    AutoWrap(DISPATCH_METHOD, NULL, pXlApp, L"Quit", 0);
+    
+    AutoWrap(DISPATCH_METHOD, NULL, pXlApp, (wchar_t*)L"Quit", 0);
 
     // Release references...
     pXlRange->Release();
